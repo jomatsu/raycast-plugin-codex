@@ -1,0 +1,1 @@
+# raycast-plugin-codex
