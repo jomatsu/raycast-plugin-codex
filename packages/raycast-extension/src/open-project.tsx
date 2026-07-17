@@ -189,7 +189,7 @@ function ProjectActions({
     <ActionPanel>
       <Action title={actions.primaryTitle} icon={Icon.AppWindow} onAction={() => void actions.primaryAction()} />
       {desktopInstalled !== false && (
-        <Action title="Open via Codex CLI" icon={Icon.Terminal} onAction={() => void actions.openInCli()} />
+        <Action title="Open Via Codex CLI" icon={Icon.Terminal} onAction={() => void actions.openInCli()} />
       )}
       <Action title="Open Terminal Here" icon={Icon.Terminal} onAction={() => void actions.openInTerminal()} />
       <Action title="Show in Finder" icon={Icon.Finder} onAction={() => void actions.openFolderInFinder()} />
@@ -312,7 +312,7 @@ function ChooseFolderForm({ desktopInstalled }: { desktopInstalled: boolean | un
           />
           {desktopInstalled !== false && (
             <Action
-              title="Open via Codex CLI"
+              title="Open Via Codex CLI"
               icon={Icon.Terminal}
               onAction={() => void openSelected(openWorkspaceViaCli)}
             />

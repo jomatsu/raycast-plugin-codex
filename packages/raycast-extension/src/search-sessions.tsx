@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { access } from 'node:fs/promises';
 import { basename } from 'node:path';
-import { Action, ActionPanel, Color, Icon, List, showInFinder } from '@raycast/api';
+import { Action, ActionPanel, Color, Icon, List, showInFinder, Keyboard } from '@raycast/api';
 import { useCachedPromise } from '@raycast/utils';
 import {
   isCodexDesktopInstalled,
@@ -197,13 +197,13 @@ function SessionItem({
       <Action.CopyToClipboard
         title="Copy Resume Command"
         content={resumeCommand}
-        shortcut={{ modifiers: ['cmd', 'shift'], key: 'c' }}
+        shortcut={Keyboard.Shortcut.Common.Copy}
         icon={Icon.Terminal}
       />
       <Action.CopyToClipboard
         title="Copy Thread ID"
         content={row.id}
-        shortcut={{ modifiers: ['cmd'], key: '.' }}
+        shortcut={Keyboard.Shortcut.Common.Pin}
         icon={Icon.CopyClipboard}
       />
       <Action.CopyToClipboard title="Copy Deep Link" content={deepLink} icon={Icon.Link} />
@@ -261,7 +261,7 @@ function SessionItem({
           {row.cwd ? (
             <Action
               title="Open Project in Codex Desktop"
-              shortcut={{ modifiers: ['cmd'], key: 'o' }}
+              shortcut={Keyboard.Shortcut.Common.Open}
               icon={Icon.Folder}
               onAction={() =>
                 void runAction(
@@ -303,7 +303,7 @@ function SessionItem({
           ) : null}
           {row.cwd ? (
             <Action
-              title="Open cwd in Finder"
+              title="Open Project Folder in Finder"
               icon={Icon.Finder}
               onAction={() =>
                 void runAction(
