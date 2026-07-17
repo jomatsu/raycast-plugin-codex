@@ -139,7 +139,7 @@ interface SessionItemProps {
   scope: SessionScope;
   state: SessionState | undefined;
   isShowingDetail: boolean;
-  desktopInstalled: boolean;
+  desktopInstalled: boolean | undefined;
   codexBinary: string | null;
   rolloutExists: boolean;
   onToggleDetail: () => void;
@@ -162,36 +162,46 @@ function SessionItem({
   const cwdName = row.cwd ? basename(row.cwd) : "";
   const resumeCommand = buildResumeCommand(codexBinary || "codex", row.cwd || undefined, row.id);
   const deepLink = threadDeepLink(row.id);
-  const desktopAction = desktopInstalled ? (
-    <Action
-      title={scope === "Archived" ? "Open in Codex Desktop (Archived — May Not Load)" : "Open in Codex Desktop"}
-      icon={Icon.AppWindow}
-      onAction={() =>
-        void runAction(
-          async () => {
-            if (await openThread(row.id, row.cwd || undefined)) {
-              await markSessionSeen(row.id);
-              await onStateRefresh();
-            }
-          },
-          "Could not open Codex Desktop",
-          "Use Resume in Terminal or Copy Resume Command.",
-        )
-      }
-    />
-  ) : row.cwd ? (
-    <Action
-      title="Open Project Via Codex CLI"
-      icon={Icon.Terminal}
-      onAction={() =>
-        void runAction(
-          () => openWorkspaceViaCli(row.cwd),
-          "Could not open the project",
-          "Set Codex CLI Path in extension preferences and try again.",
-        )
-      }
-    />
-  ) : null;
+  // Three desktop states: true → Desktop deep link, false → CLI fallback,
+  // undefined (check pending) → a neutral label; openThread() re-checks at
+  // action time, so the behavior is correct in every state.
+  const desktopAction =
+    desktopInstalled === false && !row.cwd ? null : desktopInstalled === false ? (
+      <Action
+        title="Open Project Via Codex CLI"
+        icon={Icon.Terminal}
+        onAction={() =>
+          void runAction(
+            () => openWorkspaceViaCli(row.cwd),
+            "Could not open the project",
+            "Set Codex CLI Path in extension preferences and try again.",
+          )
+        }
+      />
+    ) : (
+      <Action
+        title={
+          desktopInstalled === undefined
+            ? "Open Session"
+            : scope === "Archived"
+              ? "Open in Codex Desktop (Archived — May Not Load)"
+              : "Open in Codex Desktop"
+        }
+        icon={Icon.AppWindow}
+        onAction={() =>
+          void runAction(
+            async () => {
+              if (await openThread(row.id, row.cwd || undefined)) {
+                await markSessionSeen(row.id);
+                await onStateRefresh();
+              }
+            },
+            "Could not open the session",
+            "Use Resume in Terminal or Copy Resume Command.",
+          )
+        }
+      />
+    );
   const copyActions = (
     <>
       <Action.CopyToClipboard
@@ -258,7 +268,7 @@ function SessionItem({
               {copyActions}
             </>
           )}
-          {row.cwd && desktopInstalled ? (
+          {row.cwd && desktopInstalled === true ? (
             <Action
               title="Open Project in Codex Desktop"
               shortcut={Keyboard.Shortcut.Common.Open}
@@ -399,7 +409,8 @@ export default function SearchSessions() {
     return loadedRows;
   }, [loadedRows, scope, states]);
   const degraded = data?.degraded === true;
-  const desktopInstalled = desktopInstalledData !== false;
+  // Tri-state on purpose: undefined means the installed check is still pending.
+  const desktopInstalled = desktopInstalledData;
   const buckets = React.useMemo(() => bucketRows(rows), [rows]);
   const atSearchCap = mode !== "Interactive" && searchText.trim().length > 0 && rows.length >= 200;
 

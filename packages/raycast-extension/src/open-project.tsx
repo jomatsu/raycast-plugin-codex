@@ -157,7 +157,14 @@ function useProjectActions(
     await markVisited(opened);
   }, [markVisited, path]);
 
-  const primaryTitle = desktopInstalled === false ? "Open Via Codex CLI" : "Open in Codex Desktop";
+  // Tri-state: while the Desktop check is pending, use a neutral title;
+  // openWorkspace() re-checks at action time, so the behavior stays correct.
+  const primaryTitle =
+    desktopInstalled === true
+      ? "Open in Codex Desktop"
+      : desktopInstalled === false
+        ? "Open Via Codex CLI"
+        : "Open Project";
   const primaryAction = desktopInstalled === false ? openInCli : openInDesktop;
 
   return {
