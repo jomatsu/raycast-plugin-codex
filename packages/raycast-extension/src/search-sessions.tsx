@@ -179,19 +179,19 @@ function SessionItem({
         )
       }
     />
-  ) : (
+  ) : row.cwd ? (
     <Action
-      title="Install Codex Desktop"
-      icon={Icon.Download}
+      title="Open Project Via Codex CLI"
+      icon={Icon.Terminal}
       onAction={() =>
         void runAction(
           () => openWorkspaceViaCli(row.cwd),
-          "Could not install Codex Desktop",
+          "Could not open the project",
           "Set Codex CLI Path in extension preferences and try again.",
         )
       }
     />
-  );
+  ) : null;
   const copyActions = (
     <>
       <Action.CopyToClipboard

@@ -157,7 +157,7 @@ function useProjectActions(
     await markVisited(opened);
   }, [markVisited, path]);
 
-  const primaryTitle = desktopInstalled === false ? "Install Codex Desktop" : "Open in Codex Desktop";
+  const primaryTitle = desktopInstalled === false ? "Open Via Codex CLI" : "Open in Codex Desktop";
   const primaryAction = desktopInstalled === false ? openInCli : openInDesktop;
 
   return {
