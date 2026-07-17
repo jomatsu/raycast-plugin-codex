@@ -1,9 +1,9 @@
-import { createReadStream } from 'node:fs';
-import { readdir, stat } from 'node:fs/promises';
-import { createInterface } from 'node:readline';
-import { join } from 'node:path';
-import { getCodexHome, sessionsDir } from './codex-paths';
-import type { ThreadRow } from './threads';
+import { createReadStream } from "node:fs";
+import { readdir, stat } from "node:fs/promises";
+import { createInterface } from "node:readline";
+import { join } from "node:path";
+import { getCodexHome, sessionsDir } from "./codex-paths";
+import type { ThreadRow } from "./threads";
 
 interface SessionMeta {
   id?: string;
@@ -20,12 +20,12 @@ interface ParsedRollout {
 }
 
 function stringValue(value: unknown): string {
-  return typeof value === 'string' ? value : '';
+  return typeof value === "string" ? value : "";
 }
 
 function timestampMs(value: unknown, fallback: number): number {
-  if (typeof value === 'number' && Number.isFinite(value)) return value > 100_000_000_000 ? value : value * 1000;
-  if (typeof value === 'string') {
+  if (typeof value === "number" && Number.isFinite(value)) return value > 100_000_000_000 ? value : value * 1000;
+  if (typeof value === "string") {
     const parsed = Date.parse(value);
     if (Number.isFinite(parsed)) return parsed;
   }
@@ -34,9 +34,9 @@ function timestampMs(value: unknown, fallback: number): number {
 
 function passesInteractiveFilter(meta: SessionMeta): boolean {
   return (
-    stringValue(meta.thread_source) !== 'subagent' &&
-    stringValue(meta.source) !== 'exec' &&
-    !stringValue(meta.source).startsWith('{')
+    stringValue(meta.thread_source) !== "subagent" &&
+    stringValue(meta.source) !== "exec" &&
+    !stringValue(meta.source).startsWith("{")
   );
 }
 
@@ -49,7 +49,7 @@ async function fileHead(path: string): Promise<ParsedRollout | null> {
   }
 
   const rows: string[] = [];
-  const stream = createReadStream(path, { encoding: 'utf8', start: 0, end: 512 * 1024 });
+  const stream = createReadStream(path, { encoding: "utf8", start: 0, end: 512 * 1024 });
   const lines = createInterface({ input: stream, crlfDelay: Infinity });
   try {
     for await (const line of lines) {
@@ -73,12 +73,12 @@ async function fileHead(path: string): Promise<ParsedRollout | null> {
   const source = stringValue(meta.source);
   if (!id || !passesInteractiveFilter(meta)) return null;
 
-  let firstUserMessage = '';
-  let preview = '';
+  let firstUserMessage = "";
+  let preview = "";
   for (const line of rows.slice(1)) {
     try {
       const event = JSON.parse(line) as { type?: string; payload?: { type?: string; message?: unknown } };
-      if (event.type !== 'event_msg' || event.payload?.type !== 'user_message') continue;
+      if (event.type !== "event_msg" || event.payload?.type !== "user_message") continue;
       firstUserMessage = stringValue(event.payload.message);
       if (firstUserMessage) break;
     } catch {
@@ -96,7 +96,7 @@ async function fileHead(path: string): Promise<ParsedRollout | null> {
     source,
     thread_source: meta.thread_source || null,
     cwd: stringValue(meta.cwd),
-    title: '',
+    title: "",
     first_user_message: firstUserMessage,
     preview,
     archived: 0,
@@ -138,7 +138,7 @@ async function listRolloutFiles(): Promise<string[]> {
         } catch {
           continue;
         }
-        for (const file of files.filter((entry) => entry.isFile() && entry.name.endsWith('.jsonl'))) {
+        for (const file of files.filter((entry) => entry.isFile() && entry.name.endsWith(".jsonl"))) {
           const path = join(root, year.name, month.name, day.name, file.name);
           try {
             result.push({ path, mtime: (await stat(path)).mtimeMs });

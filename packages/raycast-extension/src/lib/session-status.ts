@@ -1,8 +1,8 @@
-import { mkdir, readFile, rename, rm, stat, unlink, writeFile } from 'node:fs/promises';
-import { homedir } from 'node:os';
-import { dirname, join } from 'node:path';
-import { randomUUID } from 'node:crypto';
-import { setTimeout as delay } from 'node:timers/promises';
+import { mkdir, readFile, rename, rm, stat, unlink, writeFile } from "node:fs/promises";
+import { homedir } from "node:os";
+import { dirname, join } from "node:path";
+import { randomUUID } from "node:crypto";
+import { setTimeout as delay } from "node:timers/promises";
 
 // The session-status hook that writes this state lives in packages/codex-raycast
 // of this monorepo (installed with `npx codex-raycast setup`). This module only
@@ -10,10 +10,10 @@ import { setTimeout as delay } from 'node:timers/promises';
 // Raycast. The states schema and the lock protocol must stay compatible with the
 // hook; the contract tests in test/contract enforce that.
 
-export const sessionStatesFileName = 'states.json';
+export const sessionStatesFileName = "states.json";
 const MAX_SESSION_STATES = 500;
 
-export type SessionStatus = 'working' | 'done';
+export type SessionStatus = "working" | "done";
 
 export interface SessionState {
   status: SessionStatus;
@@ -29,8 +29,8 @@ export type SessionStateMap = Record<string, SessionState>;
 export function sessionStateDir(): string {
   const override = process.env.RAYCAST_CODEX_STATE_DIR?.trim();
   if (override) return override;
-  const root = process.env.XDG_STATE_HOME?.trim() || join(homedir(), '.local', 'state');
-  return join(root, 'raycast-codex-sessions');
+  const root = process.env.XDG_STATE_HOME?.trim() || join(homedir(), ".local", "state");
+  return join(root, "raycast-codex-sessions");
 }
 
 export function sessionStatesPath(): string {
@@ -38,22 +38,22 @@ export function sessionStatesPath(): string {
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function isSessionStatus(value: unknown): value is SessionStatus {
-  return value === 'working' || value === 'done';
+  return value === "working" || value === "done";
 }
 
 function isSessionState(value: unknown): value is SessionState {
   if (!isObject(value)) return false;
   return (
     isSessionStatus(value.status) &&
-    typeof value.unread === 'boolean' &&
-    typeof value.updatedAt === 'string' &&
-    typeof value.turnId === 'string' &&
-    typeof value.cwd === 'string' &&
-    typeof value.source === 'string'
+    typeof value.unread === "boolean" &&
+    typeof value.updatedAt === "string" &&
+    typeof value.turnId === "string" &&
+    typeof value.cwd === "string" &&
+    typeof value.source === "string"
   );
 }
 
@@ -84,7 +84,7 @@ function parseSessionStates(text: string): SessionStateMap {
 
 export async function loadSessionStates(): Promise<SessionStateMap> {
   try {
-    return parseSessionStates(await readFile(sessionStatesPath(), 'utf8'));
+    return parseSessionStates(await readFile(sessionStatesPath(), "utf8"));
   } catch {
     return {};
   }
@@ -94,7 +94,7 @@ async function atomicWrite(path: string, content: string): Promise<void> {
   await mkdir(dirname(path), { recursive: true });
   const temporary = `${path}.${process.pid}.${Date.now()}.${randomUUID()}.tmp`;
   try {
-    await writeFile(temporary, content, 'utf8');
+    await writeFile(temporary, content, "utf8");
     await rename(temporary, path);
   } finally {
     try {
@@ -117,7 +117,7 @@ async function withStateLock<T>(callback: () => Promise<T>): Promise<T> {
       acquired = true;
       break;
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+      if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
       try {
         const lock = await stat(lockPath);
         if (Date.now() - lock.mtimeMs > 30_000) {

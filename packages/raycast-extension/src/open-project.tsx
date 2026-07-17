@@ -1,4 +1,4 @@
-import * as React from 'react';
+import * as React from "react";
 import {
   Action,
   ActionPanel,
@@ -11,11 +11,11 @@ import {
   showToast,
   Toast,
   useNavigation,
-} from '@raycast/api';
-import { useCachedPromise, useFrecencySorting } from '@raycast/utils';
-import { stat } from 'node:fs/promises';
-import { homedir } from 'node:os';
-import { dirname, relative } from 'node:path';
+} from "@raycast/api";
+import { useCachedPromise, useFrecencySorting } from "@raycast/utils";
+import { stat } from "node:fs/promises";
+import { homedir } from "node:os";
+import { dirname, relative } from "node:path";
 import {
   isCodexDesktopInstalled,
   newTaskDeepLink,
@@ -23,13 +23,13 @@ import {
   openWorkspace,
   openWorkspaceViaCli,
   showFailureToast,
-} from './lib/open-codex';
-import { worktreesDir } from './lib/codex-paths';
-import { loadProjects, projectName, type ProjectRow } from './lib/threads';
-import { loadSessionStates, type SessionStateMap } from './lib/session-status';
+} from "./lib/open-codex";
+import { worktreesDir } from "./lib/codex-paths";
+import { loadProjects, projectName, type ProjectRow } from "./lib/threads";
+import { loadSessionStates, type SessionStateMap } from "./lib/session-status";
 
 type ProjectWithOrigin = ProjectRow & { git_origin_url?: string | null };
-type ValidationStatus = 'existing' | 'missing';
+type ValidationStatus = "existing" | "missing";
 
 const emptyRows: ProjectRow[] = [];
 const validationConcurrency = 8;
@@ -51,7 +51,7 @@ function projectKeywords(row: ProjectRow): string[] {
 function abbreviatedParent(path: string): string {
   const parent = dirname(path);
   const home = homedir();
-  if (parent === home) return '~';
+  if (parent === home) return "~";
   if (parent.startsWith(`${home}/`)) return `~/${parent.slice(home.length + 1)}`;
   return parent;
 }
@@ -59,7 +59,7 @@ function abbreviatedParent(path: string): string {
 function isUnderWorktrees(path: string): boolean {
   const worktrees = worktreesDir();
   const pathFromWorktrees = relative(worktrees, path);
-  return pathFromWorktrees === '' || (!pathFromWorktrees.startsWith('..') && !pathFromWorktrees.startsWith('/'));
+  return pathFromWorktrees === "" || (!pathFromWorktrees.startsWith("..") && !pathFromWorktrees.startsWith("/"));
 }
 
 async function findMissingProjects(rows: ProjectRow[]): Promise<Set<string>> {
@@ -92,7 +92,7 @@ function useProjectValidation(rows: ProjectRow[]) {
     void findMissingProjects(rows).then((missing) => {
       if (cancelled) return;
       const nextStatuses: Record<string, ValidationStatus> = {};
-      for (const row of rows) nextStatuses[row.cwd] = missing.has(row.cwd) ? 'missing' : 'existing';
+      for (const row of rows) nextStatuses[row.cwd] = missing.has(row.cwd) ? "missing" : "existing";
       setStatuses(nextStatuses);
     });
     return () => {
@@ -101,17 +101,17 @@ function useProjectValidation(rows: ProjectRow[]) {
   }, [rows]);
 
   return {
-    existing: rows.filter((row) => statuses[row.cwd] !== 'missing'),
-    missing: rows.filter((row) => statuses[row.cwd] === 'missing'),
+    existing: rows.filter((row) => statuses[row.cwd] !== "missing"),
+    missing: rows.filter((row) => statuses[row.cwd] === "missing"),
   };
 }
 
 async function openTerminalHere(path: string): Promise<boolean> {
   try {
-    await open(path, 'com.apple.Terminal');
+    await open(path, "com.apple.Terminal");
     return true;
   } catch {
-    await showFailureToast('Could not open the terminal', 'Check that Terminal is available on this Mac.');
+    await showFailureToast("Could not open the terminal", "Check that Terminal is available on this Mac.");
     return false;
   }
 }
@@ -121,7 +121,7 @@ async function showInFinder(path: string): Promise<boolean> {
     await open(path);
     return true;
   } catch {
-    await showFailureToast('Could not show the folder in Finder', 'Check that the folder still exists.');
+    await showFailureToast("Could not show the folder in Finder", "Check that the folder still exists.");
     return false;
   }
 }
@@ -157,7 +157,7 @@ function useProjectActions(
     await markVisited(opened);
   }, [markVisited, path]);
 
-  const primaryTitle = desktopInstalled === false ? 'Install Codex Desktop' : 'Open in Codex Desktop';
+  const primaryTitle = desktopInstalled === false ? "Install Codex Desktop" : "Open in Codex Desktop";
   const primaryAction = desktopInstalled === false ? openInCli : openInDesktop;
 
   return {
@@ -248,7 +248,7 @@ function MissingProjectItem({ row }: { row: ProjectRow }) {
       subtitle={abbreviatedParent(row.cwd)}
       keywords={projectKeywords(row)}
       icon={Icon.Folder}
-      accessories={[{ text: 'Folder not found' }, { text: `${row.session_count} sessions` }]}
+      accessories={[{ text: "Folder not found" }, { text: `${row.session_count} sessions` }]}
       actions={
         <ActionPanel>
           {origin && (
@@ -273,8 +273,8 @@ function ChooseFolderForm({ desktopInstalled }: { desktopInstalled: boolean | un
     if (selectedPath) return selectedPath;
     await showToast({
       style: Toast.Style.Failure,
-      title: 'No folder selected',
-      message: 'Choose a project folder first.',
+      title: "No folder selected",
+      message: "Choose a project folder first.",
     });
     return undefined;
   }, [selectedPath]);
@@ -292,8 +292,8 @@ function ChooseFolderForm({ desktopInstalled }: { desktopInstalled: boolean | un
     if (!path) {
       await showToast({
         style: Toast.Style.Failure,
-        title: 'No folder selected',
-        message: 'Choose a project folder first.',
+        title: "No folder selected",
+        message: "Choose a project folder first.",
       });
       return;
     }
@@ -307,7 +307,7 @@ function ChooseFolderForm({ desktopInstalled }: { desktopInstalled: boolean | un
       actions={
         <ActionPanel>
           <Action.SubmitForm
-            title={desktopInstalled === false ? 'Install Codex Desktop' : 'Open Project'}
+            title={desktopInstalled === false ? "Install Codex Desktop" : "Open Project"}
             onSubmit={onSubmit}
           />
           {desktopInstalled !== false && (
@@ -397,11 +397,11 @@ export default function OpenProject() {
     const counts = new Map<string, { working: number; unread: number }>();
     for (const state of Object.values(states)) {
       if (!state.cwd) continue;
-      const staleWorking = state.status === 'working' && Date.now() - Date.parse(state.updatedAt) > 24 * 60 * 60 * 1000;
+      const staleWorking = state.status === "working" && Date.now() - Date.parse(state.updatedAt) > 24 * 60 * 60 * 1000;
       if (staleWorking) continue;
       const count = counts.get(state.cwd) || { working: 0, unread: 0 };
-      if (state.status === 'working') count.working += 1;
-      else if (state.status === 'done' && state.unread) count.unread += 1;
+      if (state.status === "working") count.working += 1;
+      else if (state.status === "done" && state.unread) count.unread += 1;
       counts.set(state.cwd, count);
     }
     return counts;
@@ -426,7 +426,7 @@ export default function OpenProject() {
     visitItem,
     resetRanking,
   } = useFrecencySorting(existing, {
-    namespace: 'codex-projects',
+    namespace: "codex-projects",
     key: (row) => row.cwd,
     sortUnvisited: (a, b) => b.last_used - a.last_used,
   });

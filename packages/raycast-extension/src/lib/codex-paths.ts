@@ -1,42 +1,42 @@
-import { getPreferenceValues } from '@raycast/api';
-import { executeSQL } from '@raycast/utils';
-import { access, constants, readdir, stat } from 'node:fs/promises';
-import { homedir } from 'node:os';
-import { delimiter, join, resolve } from 'node:path';
+import { getPreferenceValues } from "@raycast/api";
+import { executeSQL } from "@raycast/utils";
+import { access, constants, readdir, stat } from "node:fs/promises";
+import { homedir } from "node:os";
+import { delimiter, join, resolve } from "node:path";
 
 export interface CodexPreferences {
   codexCliPath?: string;
-  terminalApp?: 'Terminal' | 'iTerm';
+  terminalApp?: "Terminal" | "iTerm";
 }
 
 export function getCodexHome(): string {
-  return process.env.CODEX_HOME ?? join(homedir(), '.codex');
+  return process.env.CODEX_HOME ?? join(homedir(), ".codex");
 }
 
 export function sessionsDir(): string {
-  return join(getCodexHome(), 'sessions');
+  return join(getCodexHome(), "sessions");
 }
 
 export function worktreesDir(): string {
-  return join(getCodexHome(), 'worktrees');
+  return join(getCodexHome(), "worktrees");
 }
 
 const probeColumns = [
-  'id',
-  'rollout_path',
-  'created_at',
-  'updated_at',
-  'source',
-  'thread_source',
-  'cwd',
-  'title',
-  'first_user_message',
-  'preview',
-  'archived',
-  'git_branch',
-  'git_origin_url',
-  'model',
-  'tokens_used',
+  "id",
+  "rollout_path",
+  "created_at",
+  "updated_at",
+  "source",
+  "thread_source",
+  "cwd",
+  "title",
+  "first_user_message",
+  "preview",
+  "archived",
+  "git_branch",
+  "git_origin_url",
+  "model",
+  "tokens_used",
 ];
 
 export async function discoverStateDb(): Promise<string | null> {
@@ -55,7 +55,7 @@ export async function discoverStateDb(): Promise<string | null> {
     .filter((candidate): candidate is { path: string; version: number } => candidate !== null)
     .sort((a, b) => b.version - a.version);
 
-  const probe = `SELECT ${probeColumns.join(', ')} FROM threads LIMIT 1`;
+  const probe = `SELECT ${probeColumns.join(", ")} FROM threads LIMIT 1`;
   for (const candidate of candidates) {
     try {
       await executeSQL(candidate.path, probe);
@@ -78,8 +78,8 @@ async function isExecutable(path: string): Promise<boolean> {
 }
 
 function expandPath(path: string): string {
-  if (path === '~') return homedir();
-  if (path.startsWith('~/')) return join(homedir(), path.slice(2));
+  if (path === "~") return homedir();
+  if (path.startsWith("~/")) return join(homedir(), path.slice(2));
   return resolve(path);
 }
 
@@ -98,18 +98,18 @@ export async function resolveCodexBinary(): Promise<string | null> {
   }
 
   const candidates = [
-    join(homedir(), '.local/bin/codex'),
-    '/opt/homebrew/bin/codex',
-    '/usr/local/bin/codex',
-    join(homedir(), '.cargo/bin/codex'),
+    join(homedir(), ".local/bin/codex"),
+    "/opt/homebrew/bin/codex",
+    "/usr/local/bin/codex",
+    join(homedir(), ".cargo/bin/codex"),
   ];
   for (const candidate of candidates) {
     if (await isExecutable(candidate)) return candidate;
   }
 
-  for (const directory of (process.env.PATH || '').split(delimiter)) {
+  for (const directory of (process.env.PATH || "").split(delimiter)) {
     if (!directory) continue;
-    const candidate = join(directory, 'codex');
+    const candidate = join(directory, "codex");
     if (await isExecutable(candidate)) return candidate;
   }
   return null;
