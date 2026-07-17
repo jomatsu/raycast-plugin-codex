@@ -246,7 +246,7 @@ function ProjectItem({
   );
 }
 
-function MissingProjectItem({ row }: { row: ProjectRow }) {
+function MissingProjectItem({ row, desktopInstalled }: { row: ProjectRow; desktopInstalled: boolean | undefined }) {
   const origin = originFor(row);
   return (
     <List.Item
@@ -258,11 +258,20 @@ function MissingProjectItem({ row }: { row: ProjectRow }) {
       accessories={[{ text: "Folder not found" }, { text: `${row.session_count} sessions` }]}
       actions={
         <ActionPanel>
-          {origin && (
+          {/* Reopening a deleted folder by its remote is a Desktop-only
+              capability — there is no local path for the CLI to open. */}
+          {origin && desktopInstalled === true && (
             <Action
               title="Reopen by Git Remote"
               icon={Icon.Download}
               onAction={() => void openDeepLink(newTaskDeepLink({ originUrl: origin }))}
+            />
+          )}
+          {origin && (
+            <Action
+              title="Copy Git Remote URL"
+              icon={Icon.CopyClipboard}
+              onAction={() => void Clipboard.copy(origin)}
             />
           )}
           <Action title="Copy Path" icon={Icon.CopyClipboard} onAction={() => void Clipboard.copy(row.cwd)} />
@@ -455,10 +464,10 @@ export default function OpenProject() {
       </List.Section>
       {missing.length > 0 && (
         <List.Section title="Missing Folders">
-          {missing
+          {[...missing]
             .sort((a, b) => b.last_used - a.last_used)
             .map((row) => (
-              <MissingProjectItem key={row.cwd} row={row} />
+              <MissingProjectItem key={row.cwd} row={row} desktopInstalled={desktopInstalled} />
             ))}
         </List.Section>
       )}
