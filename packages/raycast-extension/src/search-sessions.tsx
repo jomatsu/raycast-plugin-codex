@@ -258,7 +258,7 @@ function SessionItem({
               {copyActions}
             </>
           )}
-          {row.cwd ? (
+          {row.cwd && desktopInstalled ? (
             <Action
               title="Open Project in Codex Desktop"
               shortcut={Keyboard.Shortcut.Common.Open}
@@ -267,7 +267,7 @@ function SessionItem({
                 void runAction(
                   () => openWorkspace(row.cwd),
                   "Could not open the project",
-                  "Check that Codex Desktop is installed or use Open via Codex CLI.",
+                  "Check that Codex Desktop is installed or use Resume in Terminal.",
                 )
               }
             />
