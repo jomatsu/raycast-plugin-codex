@@ -307,7 +307,7 @@ function ChooseFolderForm({ desktopInstalled }: { desktopInstalled: boolean | un
       actions={
         <ActionPanel>
           <Action.SubmitForm
-            title={desktopInstalled === false ? "Install Codex Desktop" : "Open Project"}
+            title={desktopInstalled === false ? "Open Via Codex CLI" : "Open Project"}
             onSubmit={onSubmit}
           />
           {desktopInstalled !== false && (
