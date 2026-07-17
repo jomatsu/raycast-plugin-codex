@@ -1,0 +1,27 @@
+{
+  "name": "session-status",
+  "description": "Maintain Working / Done-Unread session state in states.json for the Codex Sessions Raycast extension",
+  "marker": "codex-raycast-session-hook.mjs",
+  "legacyMarkers": ["raycast-codex-completion-hook.py"],
+  "legacyFiles": ["raycast-codex-completion-hook.py"],
+  "files": [
+    {
+      "source": "hook.mjs",
+      "target": "codex-raycast-session-hook.mjs",
+      "mode": "755"
+    }
+  ],
+  "hooks": {
+    "Stop": {
+      "command": "node ${hook.mjs} stop",
+      "timeout": 10
+    },
+    "UserPromptSubmit": {
+      "command": "node ${hook.mjs} prompt",
+      "timeout": 10
+    }
+  },
+  "features": {
+    "hooks": true
+  }
+}

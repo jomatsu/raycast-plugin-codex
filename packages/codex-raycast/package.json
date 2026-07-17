@@ -1,0 +1,41 @@
+{
+  "name": "codex-raycast",
+  "version": "0.1.0",
+  "description": "Sets up the Codex session-status hook that powers the Codex Sessions Raycast extension",
+  "keywords": [
+    "codex",
+    "openai",
+    "hooks",
+    "raycast"
+  ],
+  "license": "MIT",
+  "author": "Jo Matsuda",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jomatsu/raycast-plugin-codex.git",
+    "directory": "packages/codex-raycast"
+  },
+  "type": "module",
+  "bin": {
+    "codex-raycast": "bin/codex-raycast.mjs"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "patches"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.17",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10"
+  }
+}
