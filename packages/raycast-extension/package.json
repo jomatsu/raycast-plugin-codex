@@ -4,7 +4,7 @@
   "title": "Codex Sessions",
   "description": "Fuzzy-find Codex sessions and open projects in Codex Desktop",
   "icon": "extension-icon.png",
-  "author": "nasubikun",
+  "author": "jomatsu",
   "platforms": [
     "macOS"
   ],
