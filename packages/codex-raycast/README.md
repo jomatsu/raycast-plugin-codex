@@ -1,6 +1,6 @@
 # codex-raycast
 
-Sets up the Codex hooks that power the [Codex Sessions Raycast extension](../raycast-extension) — an idempotent setup/status/doctor workflow for user-level OpenAI Codex configuration (`$CODEX_HOME`, default `~/.codex`) that keeps up with Codex version upgrades.
+Sets up the Codex hooks that power the [Codex Sessions Raycast extension](https://github.com/jomatsu/raycast-plugin-codex/tree/main/packages/raycast-extension) — an idempotent setup/status/doctor workflow for user-level OpenAI Codex configuration (`$CODEX_HOME`, default `~/.codex`) that keeps up with Codex version upgrades.
 
 The **session-status** patch installs two Codex hooks that maintain a small `states.json` (`working` / `done` + unread) which the extension joins onto its SQLite-backed session list. The hook stores no prompt or assistant content and has no UI of its own.
 

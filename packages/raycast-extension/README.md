@@ -9,6 +9,20 @@ A macOS Raycast extension for finding local Codex sessions and opening Codex pro
 
 Both commands enrich SQLite session metadata with lightweight `Working` and `Done · Unread` state written by Codex hooks. The hook has no notification UI of its own.
 
+## Setup
+
+1. Install Codex Desktop or the Codex CLI and create at least one local session.
+2. Install Codex Sessions from the Raycast Store.
+3. Optional: enable live `Working` and `Done · Unread` status tags:
+
+   ```sh
+   npx codex-raycast setup
+   ```
+
+4. Open Codex, run `/hooks`, and review and trust both installed hooks.
+
+Session search and the project list work without the optional hook. The hook only adds live status tags.
+
 ## Preferences
 
 - **Codex CLI Path** optionally sets the absolute path to the `codex` binary. When empty, the extension checks common installation paths and then `PATH`.
@@ -35,4 +49,4 @@ The hook and its setup CLI ship as the [`codex-raycast`](https://www.npmjs.com/p
 
 If no sessions appear, verify that Codex has created `~/.codex` and that the optional CLI path points to an executable `codex` binary. A degraded-mode banner means the state database could not be queried; the extension will show a bounded recent file scan instead.
 
-The extension uses the documented `codex://threads/<id>` and `codex://new?path=<path>` deep links, with `codex app <path>` and terminal resume as fallbacks.
+The extension uses Codex Desktop deep links, with `codex app <path>` and terminal resume as fallbacks.
