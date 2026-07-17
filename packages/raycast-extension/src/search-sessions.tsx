@@ -1,8 +1,8 @@
-import * as React from 'react';
-import { access } from 'node:fs/promises';
-import { basename } from 'node:path';
-import { Action, ActionPanel, Color, Icon, List, showInFinder, Keyboard } from '@raycast/api';
-import { useCachedPromise } from '@raycast/utils';
+import * as React from "react";
+import { access } from "node:fs/promises";
+import { basename } from "node:path";
+import { Action, ActionPanel, Color, Icon, List, showInFinder, Keyboard } from "@raycast/api";
+import { useCachedPromise } from "@raycast/utils";
 import {
   isCodexDesktopInstalled,
   openThread,
@@ -10,30 +10,30 @@ import {
   openWorkspaceViaCli,
   showFailureToast,
   threadDeepLink,
-} from './lib/open-codex';
-import { resolveCodexBinary } from './lib/codex-paths';
-import { loadThreads, normalizeTimestamp, threadTitle, type ThreadMode, type ThreadRow } from './lib/threads';
-import { buildResumeCommand, openInTerminal } from './lib/terminal';
-import { loadSessionStates, markSessionSeen, type SessionState, type SessionStateMap } from './lib/session-status';
+} from "./lib/open-codex";
+import { resolveCodexBinary } from "./lib/codex-paths";
+import { loadThreads, normalizeTimestamp, threadTitle, type ThreadMode, type ThreadRow } from "./lib/threads";
+import { buildResumeCommand, openInTerminal } from "./lib/terminal";
+import { loadSessionStates, markSessionSeen, type SessionState, type SessionStateMap } from "./lib/session-status";
 
-type SessionScope = 'Interactive' | 'Working' | 'Unread Completed' | 'All' | 'Archived';
+type SessionScope = "Interactive" | "Working" | "Unread Completed" | "All" | "Archived";
 
-const scopes: SessionScope[] = ['Interactive', 'Working', 'Unread Completed', 'All', 'Archived'];
+const scopes: SessionScope[] = ["Interactive", "Working", "Unread Completed", "All", "Archived"];
 const scopeTitles: Record<SessionScope, string> = {
-  Interactive: 'Interactive',
-  Working: 'Working',
-  'Unread Completed': 'Unread Completed',
-  All: 'All (incl. automation)',
-  Archived: 'Archived',
+  Interactive: "Interactive",
+  Working: "Working",
+  "Unread Completed": "Unread Completed",
+  All: "All (incl. automation)",
+  Archived: "Archived",
 };
 
 function databaseMode(scope: SessionScope): ThreadMode {
-  return scope === 'Archived' ? 'Archived' : scope === 'All' ? 'All' : 'Interactive';
+  return scope === "Archived" ? "Archived" : scope === "All" ? "All" : "Interactive";
 }
 
-type TimeBucket = 'Today' | 'Yesterday' | 'This Week' | 'Older';
+type TimeBucket = "Today" | "Yesterday" | "This Week" | "Older";
 
-const bucketOrder: TimeBucket[] = ['Today', 'Yesterday', 'This Week', 'Older'];
+const bucketOrder: TimeBucket[] = ["Today", "Yesterday", "This Week", "Older"];
 
 function startOfDay(date: Date): Date {
   const result = new Date(date);
@@ -50,17 +50,17 @@ function getTimeBucket(timestamp: number, now = new Date()): TimeBucket {
   const day = monday.getDay();
   monday.setDate(monday.getDate() - (day === 0 ? 6 : day - 1));
 
-  if (date >= today) return 'Today';
-  if (date >= yesterday) return 'Yesterday';
-  if (date >= monday) return 'This Week';
-  return 'Older';
+  if (date >= today) return "Today";
+  if (date >= yesterday) return "Yesterday";
+  if (date >= monday) return "This Week";
+  return "Older";
 }
 
 function bucketRows(rows: ThreadRow[]): Record<TimeBucket, ThreadRow[]> {
   const buckets: Record<TimeBucket, ThreadRow[]> = {
     Today: [],
     Yesterday: [],
-    'This Week': [],
+    "This Week": [],
     Older: [],
   };
   for (const row of rows) buckets[getTimeBucket(row.updated_at)].push(row);
@@ -68,41 +68,41 @@ function bucketRows(rows: ThreadRow[]): Record<TimeBucket, ThreadRow[]> {
 }
 
 function sourceLabel(source: string): string {
-  if (!source) return 'unknown';
-  if (source.startsWith('{')) return 'automation';
+  if (!source) return "unknown";
+  if (source.startsWith("{")) return "automation";
   return source;
 }
 
 function sourceIcon(source: string): Icon {
   const normalized = source.toLocaleLowerCase();
-  if (normalized === 'cli' || normalized === 'exec') return Icon.Terminal;
-  if (normalized === 'vscode') return Icon.Code;
-  if (normalized === 'desktop' || normalized === 'codex') return Icon.AppWindow;
-  if (source.startsWith('{')) return Icon.Gear;
+  if (normalized === "cli" || normalized === "exec") return Icon.Terminal;
+  if (normalized === "vscode") return Icon.Code;
+  if (normalized === "desktop" || normalized === "codex") return Icon.AppWindow;
+  if (source.startsWith("{")) return Icon.Gear;
   return Icon.Message;
 }
 
 function sessionStateFor(states: SessionStateMap, row: ThreadRow): SessionState | undefined {
   const state = states[row.id];
   if (!state) return undefined;
-  if (state.status === 'working' && Date.now() - Date.parse(state.updatedAt) > 24 * 60 * 60 * 1000) return undefined;
+  if (state.status === "working" && Date.now() - Date.parse(state.updatedAt) > 24 * 60 * 60 * 1000) return undefined;
   return state;
 }
 
 function stateAccessory(state: SessionState | undefined): { tag: { value: string; color: Color } } | undefined {
   if (!state) return undefined;
-  if (state.status === 'working') return { tag: { value: 'Working', color: Color.Orange } };
-  if (state.unread) return { tag: { value: 'Done · Unread', color: Color.Green } };
-  return { tag: { value: 'Done', color: Color.SecondaryText } };
+  if (state.status === "working") return { tag: { value: "Working", color: Color.Orange } };
+  if (state.unread) return { tag: { value: "Done · Unread", color: Color.Green } };
+  return { tag: { value: "Done", color: Color.SecondaryText } };
 }
 
 function displayValue(value: string | number | null | undefined): string {
-  if (value === null || value === undefined || value === '') return '—';
+  if (value === null || value === undefined || value === "") return "—";
   return String(value);
 }
 
 function formatTokens(tokens: number): string {
-  return tokens > 0 ? tokens.toLocaleString() : '—';
+  return tokens > 0 ? tokens.toLocaleString() : "—";
 }
 
 async function runAction(action: () => Promise<unknown>, title: string, message: string): Promise<void> {
@@ -116,7 +116,7 @@ async function runAction(action: () => Promise<unknown>, title: string, message:
 function SessionDetail({ row }: { row: ThreadRow }) {
   return (
     <List.Item.Detail
-      markdown={row.first_user_message || 'No user message recorded.'}
+      markdown={row.first_user_message || "No user message recorded."}
       metadata={
         <List.Item.Detail.Metadata>
           <List.Item.Detail.Metadata.Label title="cwd" text={displayValue(row.cwd)} />
@@ -159,23 +159,23 @@ function SessionItem({
   onRefresh,
   onStateRefresh,
 }: SessionItemProps) {
-  const cwdName = row.cwd ? basename(row.cwd) : '';
-  const resumeCommand = buildResumeCommand(codexBinary || 'codex', row.cwd || undefined, row.id);
+  const cwdName = row.cwd ? basename(row.cwd) : "";
+  const resumeCommand = buildResumeCommand(codexBinary || "codex", row.cwd || undefined, row.id);
   const deepLink = threadDeepLink(row.id);
   const desktopAction = desktopInstalled ? (
     <Action
-      title={scope === 'Archived' ? 'Open in Codex Desktop (Archived — May Not Load)' : 'Open in Codex Desktop'}
+      title={scope === "Archived" ? "Open in Codex Desktop (Archived — May Not Load)" : "Open in Codex Desktop"}
       icon={Icon.AppWindow}
       onAction={() =>
         void runAction(
           async () => {
-            if (await openThread(row.id)) {
+            if (await openThread(row.id, row.cwd || undefined)) {
               await markSessionSeen(row.id);
               await onStateRefresh();
             }
           },
-          'Could not open Codex Desktop',
-          'Use Resume in Terminal or Copy Resume Command.',
+          "Could not open Codex Desktop",
+          "Use Resume in Terminal or Copy Resume Command.",
         )
       }
     />
@@ -186,8 +186,8 @@ function SessionItem({
       onAction={() =>
         void runAction(
           () => openWorkspaceViaCli(row.cwd),
-          'Could not install Codex Desktop',
-          'Set Codex CLI Path in extension preferences and try again.',
+          "Could not install Codex Desktop",
+          "Set Codex CLI Path in extension preferences and try again.",
         )
       }
     />
@@ -215,7 +215,7 @@ function SessionItem({
       id={row.id}
       title={threadTitle(row)}
       subtitle={cwdName || undefined}
-      keywords={[cwdName, row.cwd, row.git_branch || '', row.id, row.first_user_message.slice(0, 200)].filter(Boolean)}
+      keywords={[cwdName, row.cwd, row.git_branch || "", row.id, row.first_user_message.slice(0, 200)].filter(Boolean)}
       accessories={[stateAccessory(state), { date: new Date(row.updated_at) }, { tag: sourceLabel(row.source) }].filter(
         (accessory): accessory is NonNullable<typeof accessory> => accessory !== undefined,
       )}
@@ -223,17 +223,17 @@ function SessionItem({
       detail={<SessionDetail row={row} />}
       actions={
         <ActionPanel>
-          {scope === 'Archived' ? (
+          {scope === "Archived" ? (
             <>
               <Action
                 title="Resume in Terminal"
-                shortcut={{ modifiers: ['cmd'], key: 't' }}
+                shortcut={{ modifiers: ["cmd"], key: "t" }}
                 icon={Icon.Terminal}
                 onAction={() =>
                   void runAction(
                     () => openInTerminal(row.cwd || undefined, row.id),
-                    'Could not resume the session',
-                    'Use Copy Resume Command to run the session manually.',
+                    "Could not resume the session",
+                    "Use Copy Resume Command to run the session manually.",
                   )
                 }
               />
@@ -245,13 +245,13 @@ function SessionItem({
               {desktopAction}
               <Action
                 title="Resume in Terminal"
-                shortcut={{ modifiers: ['cmd'], key: 't' }}
+                shortcut={{ modifiers: ["cmd"], key: "t" }}
                 icon={Icon.Terminal}
                 onAction={() =>
                   void runAction(
                     () => openInTerminal(row.cwd || undefined, row.id),
-                    'Could not resume the session',
-                    'Use Copy Resume Command to run the session manually.',
+                    "Could not resume the session",
+                    "Use Copy Resume Command to run the session manually.",
                   )
                 }
               />
@@ -266,8 +266,8 @@ function SessionItem({
               onAction={() =>
                 void runAction(
                   () => openWorkspace(row.cwd),
-                  'Could not open the project',
-                  'Check that Codex Desktop is installed or use Open via Codex CLI.',
+                  "Could not open the project",
+                  "Check that Codex Desktop is installed or use Open via Codex CLI.",
                 )
               }
             />
@@ -279,13 +279,13 @@ function SessionItem({
               onAction={() =>
                 void runAction(
                   () => showInFinder(row.rollout_path),
-                  'Could not show the rollout',
-                  'The rollout file may have been moved or deleted.',
+                  "Could not show the rollout",
+                  "The rollout file may have been moved or deleted.",
                 )
               }
             />
           ) : null}
-          {state?.status === 'done' && state.unread ? (
+          {state?.status === "done" && state.unread ? (
             <Action
               title="Mark Completion as Seen"
               icon={Icon.Checkmark}
@@ -295,8 +295,8 @@ function SessionItem({
                     await markSessionSeen(row.id);
                     await onStateRefresh();
                   },
-                  'Could not mark completion as seen',
-                  'Try refreshing the session list.',
+                  "Could not mark completion as seen",
+                  "Try refreshing the session list.",
                 )
               }
             />
@@ -308,8 +308,8 @@ function SessionItem({
               onAction={() =>
                 void runAction(
                   () => showInFinder(row.cwd),
-                  'Could not open the project folder',
-                  'The project folder may have been moved or deleted.',
+                  "Could not open the project folder",
+                  "The project folder may have been moved or deleted.",
                 )
               }
             />
@@ -317,10 +317,10 @@ function SessionItem({
           <Action
             title="Refresh"
             icon={Icon.RotateClockwise}
-            onAction={() => void runAction(onRefresh, 'Could not refresh sessions', 'Try reopening the command.')}
+            onAction={() => void runAction(onRefresh, "Could not refresh sessions", "Try reopening the command.")}
           />
           <Action
-            title={isShowingDetail ? 'Hide Details' : 'Show Details'}
+            title={isShowingDetail ? "Hide Details" : "Show Details"}
             icon={isShowingDetail ? Icon.EyeDisabled : Icon.Eye}
             onAction={onToggleDetail}
           />
@@ -332,7 +332,7 @@ function SessionItem({
 
 function EmptyState({ scope, degraded }: { scope: SessionScope; degraded: boolean }) {
   const mode = databaseMode(scope);
-  if (degraded && scope === 'Archived') {
+  if (degraded && scope === "Archived") {
     return (
       <List.EmptyView
         icon={Icon.Box}
@@ -341,7 +341,7 @@ function EmptyState({ scope, degraded }: { scope: SessionScope; degraded: boolea
       />
     );
   }
-  if (scope === 'Working') {
+  if (scope === "Working") {
     return (
       <List.EmptyView
         icon={Icon.Clock}
@@ -350,7 +350,7 @@ function EmptyState({ scope, degraded }: { scope: SessionScope; degraded: boolea
       />
     );
   }
-  if (scope === 'Unread Completed') {
+  if (scope === "Unread Completed") {
     return (
       <List.EmptyView
         icon={Icon.Checkmark}
@@ -359,7 +359,7 @@ function EmptyState({ scope, degraded }: { scope: SessionScope; degraded: boolea
       />
     );
   }
-  if (mode === 'Interactive') {
+  if (mode === "Interactive") {
     return (
       <List.EmptyView
         icon={Icon.LineChart}
@@ -372,12 +372,12 @@ function EmptyState({ scope, degraded }: { scope: SessionScope; degraded: boolea
 }
 
 export default function SearchSessions() {
-  const [scope, setScope] = React.useState<SessionScope>('Interactive');
-  const [searchText, setSearchText] = React.useState('');
+  const [scope, setScope] = React.useState<SessionScope>("Interactive");
+  const [searchText, setSearchText] = React.useState("");
   const [isShowingDetail, setIsShowingDetail] = React.useState(false);
   const [rolloutPaths, setRolloutPaths] = React.useState<Set<string>>(new Set());
   const mode = databaseMode(scope);
-  const databaseSearch = mode === 'Interactive' ? '' : searchText;
+  const databaseSearch = mode === "Interactive" ? "" : searchText;
   const { data, isLoading, revalidate } = useCachedPromise(loadThreads, [mode, databaseSearch], {
     keepPreviousData: true,
   });
@@ -389,11 +389,11 @@ export default function SearchSessions() {
   const states: SessionStateMap = sessionStates || {};
   const loadedRows = data?.rows || [];
   const rows = React.useMemo(() => {
-    if (scope === 'Working') return loadedRows.filter((row) => sessionStateFor(states, row)?.status === 'working');
-    if (scope === 'Unread Completed') {
+    if (scope === "Working") return loadedRows.filter((row) => sessionStateFor(states, row)?.status === "working");
+    if (scope === "Unread Completed") {
       return loadedRows.filter((row) => {
         const state = sessionStateFor(states, row);
-        return state?.status === 'done' && state.unread;
+        return state?.status === "done" && state.unread;
       });
     }
     return loadedRows;
@@ -401,7 +401,7 @@ export default function SearchSessions() {
   const degraded = data?.degraded === true;
   const desktopInstalled = desktopInstalledData !== false;
   const buckets = React.useMemo(() => bucketRows(rows), [rows]);
-  const atSearchCap = mode !== 'Interactive' && searchText.trim().length > 0 && rows.length >= 200;
+  const atSearchCap = mode !== "Interactive" && searchText.trim().length > 0 && rows.length >= 200;
 
   React.useEffect(() => {
     const interval = setInterval(() => void revalidateStates(), 2000);
@@ -432,7 +432,7 @@ export default function SearchSessions() {
     const nextScope = value as SessionScope;
     if (!scopes.includes(nextScope)) return;
     setScope(nextScope);
-    setSearchText('');
+    setSearchText("");
     setIsShowingDetail(false);
   };
 
@@ -444,11 +444,11 @@ export default function SearchSessions() {
             id="degraded-state-db"
             title="state DB unavailable — showing newest sessions from files"
             icon={Icon.Warning}
-            accessories={[{ tag: { value: 'Degraded mode', color: Color.Orange } }]}
+            accessories={[{ tag: { value: "Degraded mode", color: Color.Orange } }]}
           />
         </List.Section>
       ) : null}
-      {mode === 'Interactive'
+      {mode === "Interactive"
         ? bucketOrder.map((bucket) =>
             buckets[bucket].length > 0 ? (
               <List.Section key={bucket} title={bucket}>
@@ -476,7 +476,7 @@ export default function SearchSessions() {
                 key="sessions"
                 title={scopeTitles[scope]}
                 subtitle={
-                  atSearchCap ? 'Showing first 200 matches — refine your search for more specific results.' : undefined
+                  atSearchCap ? "Showing first 200 matches — refine your search for more specific results." : undefined
                 }
               >
                 {rows.map((row) => (
@@ -504,9 +504,9 @@ export default function SearchSessions() {
     <List
       isLoading={isLoading}
       isShowingDetail={isShowingDetail}
-      filtering={mode === 'Interactive' ? { keepSectionOrder: true } : false}
-      throttle={mode !== 'Interactive'}
-      onSearchTextChange={mode !== 'Interactive' ? setSearchText : undefined}
+      filtering={mode === "Interactive" ? { keepSectionOrder: true } : false}
+      throttle={mode !== "Interactive"}
+      onSearchTextChange={mode !== "Interactive" ? setSearchText : undefined}
       searchBarAccessory={
         <List.Dropdown tooltip="Session scope" value={scope} onChange={onScopeChange} storeValue>
           {scopes.map((value) => (

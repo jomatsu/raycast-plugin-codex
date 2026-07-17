@@ -1,9 +1,9 @@
-import { executeSQL } from '@raycast/utils';
-import { basename } from 'node:path';
-import { discoverStateDb } from './codex-paths';
-import { scanRecentRollouts } from './rollout-fallback';
+import { executeSQL } from "@raycast/utils";
+import { basename } from "node:path";
+import { discoverStateDb } from "./codex-paths";
+import { scanRecentRollouts } from "./rollout-fallback";
 
-export type ThreadMode = 'Interactive' | 'All' | 'Archived';
+export type ThreadMode = "Interactive" | "All" | "Archived";
 
 export interface ThreadRow {
   id: string;
@@ -40,22 +40,22 @@ export interface LoadResult<T> {
 // Text columns are bounded with substr(): first_user_message can hold entire pasted
 // documents, and unbounded rows blow Raycast's 100 MB command heap on large histories.
 const threadColumns = [
-  'id',
-  'rollout_path',
-  'created_at',
-  'updated_at',
-  'source',
-  'thread_source',
-  'cwd',
-  'substr(title, 1, 300) AS title',
-  'substr(first_user_message, 1, 2000) AS first_user_message',
-  'substr(preview, 1, 300) AS preview',
-  'archived',
-  'git_branch',
-  'git_origin_url',
-  'model',
-  'tokens_used',
-].join(', ');
+  "id",
+  "rollout_path",
+  "created_at",
+  "updated_at",
+  "source",
+  "thread_source",
+  "cwd",
+  "substr(title, 1, 300) AS title",
+  "substr(first_user_message, 1, 2000) AS first_user_message",
+  "substr(preview, 1, 300) AS preview",
+  "archived",
+  "git_branch",
+  "git_origin_url",
+  "model",
+  "tokens_used",
+].join(", ");
 
 export const interactiveWhere = `archived = 0
   AND COALESCE(thread_source, '') != 'subagent'
@@ -72,7 +72,7 @@ function normalizeLimit(limit: number): number {
 
 export function threadsQuery(mode: ThreadMode, limit = 5000): string {
   const safeLimit = normalizeLimit(limit);
-  const where = mode === 'Interactive' ? interactiveWhere : mode === 'Archived' ? 'archived = 1' : '1 = 1';
+  const where = mode === "Interactive" ? interactiveWhere : mode === "Archived" ? "archived = 1" : "1 = 1";
   return `SELECT ${threadColumns}
 FROM threads
 WHERE ${where}
@@ -83,11 +83,11 @@ LIMIT ${safeLimit}`;
 export function searchAllThreadsQuery(search: string, mode: ThreadMode, limit = 200): string {
   const safeLimit = normalizeLimit(limit);
   const escaped = escapeSqlLiteral(search.trim());
-  const whereMode = mode === 'Archived' ? 'archived = 1' : mode === 'All' ? '1 = 1' : interactiveWhere;
+  const whereMode = mode === "Archived" ? "archived = 1" : mode === "All" ? "1 = 1" : interactiveWhere;
   const like = `%${escaped}%`;
-  const terms = ['title', 'first_user_message', 'preview', 'cwd', 'git_branch', 'id']
+  const terms = ["title", "first_user_message", "preview", "cwd", "git_branch", "id"]
     .map((column) => `${column} LIKE '${like}'`)
-    .join(' OR ');
+    .join(" OR ");
   return `SELECT ${threadColumns}
 FROM threads
 WHERE ${whereMode}
@@ -110,11 +110,11 @@ LIMIT ${normalizeLimit(limit)}`;
 }
 
 function text(value: unknown): string {
-  return typeof value === 'string' ? value : '';
+  return typeof value === "string" ? value : "";
 }
 
 function number(value: unknown): number {
-  return typeof value === 'number' && Number.isFinite(value) ? value : Number(value) || 0;
+  return typeof value === "number" && Number.isFinite(value) ? value : Number(value) || 0;
 }
 
 export function normalizeTimestamp(value: unknown): number {
@@ -122,7 +122,7 @@ export function normalizeTimestamp(value: unknown): number {
   return timestamp > 100_000_000_000 ? timestamp : timestamp * 1000;
 }
 
-export function threadTitle(row: Pick<ThreadRow, 'title' | 'first_user_message' | 'preview' | 'id'>): string {
+export function threadTitle(row: Pick<ThreadRow, "title" | "first_user_message" | "preview" | "id">): string {
   const candidates = [text(row.title).trim(), text(row.first_user_message).trim(), text(row.preview).trim()];
   const chosenIndex = candidates.findIndex(Boolean);
   if (chosenIndex === -1) return row.id;
@@ -164,33 +164,33 @@ export function projectName(cwd: string): string {
   return basename(cwd) || cwd;
 }
 
-export async function loadThreads(mode: ThreadMode = 'Interactive', search = ''): Promise<LoadResult<ThreadRow>> {
+export function filterThreadRows(rows: ThreadRow[], search: string): ThreadRow[] {
+  const needle = search.trim().toLocaleLowerCase();
+  if (!needle) return rows;
+  return rows.filter((row) =>
+    [row.title, row.first_user_message, row.preview, row.cwd, row.id].some((value) =>
+      value.toLocaleLowerCase().includes(needle),
+    ),
+  );
+}
+
+export async function loadThreads(mode: ThreadMode = "Interactive", search = ""): Promise<LoadResult<ThreadRow>> {
   const db = await discoverStateDb();
   if (!db) {
-    if (mode === 'Archived') return { rows: [], degraded: true };
-    const rows = await scanRecentRollouts();
-    const needle = search.trim().toLocaleLowerCase();
-    const filtered = needle
-      ? rows.filter((row) =>
-          [row.title, row.first_user_message, row.preview, row.cwd, row.id].some((value) =>
-            value.toLocaleLowerCase().includes(needle),
-          ),
-        )
-      : rows;
-    return { rows: filtered, degraded: true };
+    if (mode === "Archived") return { rows: [], degraded: true };
+    return { rows: filterThreadRows(await scanRecentRollouts(), search), degraded: true };
   }
 
   try {
     const query =
-      search.trim() && mode !== 'Interactive'
+      search.trim() && mode !== "Interactive"
         ? searchAllThreadsQuery(search, mode)
-        : threadsQuery(mode, mode === 'Interactive' ? 5000 : 200);
+        : threadsQuery(mode, mode === "Interactive" ? 5000 : 200);
     const rows = (await executeSQL<Partial<ThreadRow>>(db, query)).map(normalizeThread);
-    return { rows, degraded: false, truncated: mode === 'Interactive' && rows.length >= 5000 };
+    return { rows, degraded: false, truncated: mode === "Interactive" && rows.length >= 5000 };
   } catch {
-    if (mode === 'Archived') return { rows: [], degraded: true };
-    const rows = await scanRecentRollouts();
-    return { rows, degraded: true };
+    if (mode === "Archived") return { rows: [], degraded: true };
+    return { rows: filterThreadRows(await scanRecentRollouts(), search), degraded: true };
   }
 }
 
