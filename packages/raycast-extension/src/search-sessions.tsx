@@ -162,40 +162,41 @@ function SessionItem({
   const cwdName = row.cwd ? basename(row.cwd) : "";
   const resumeCommand = buildResumeCommand(codexBinary || "codex", row.cwd || undefined, row.id);
   const deepLink = threadDeepLink(row.id);
-  // Three desktop states: true → Desktop deep link, false → CLI fallback,
-  // undefined (check pending) → a neutral label; openThread() re-checks at
-  // action time, so the behavior is correct in every state.
+  const markOpened = async (opened: boolean) => {
+    if (opened) {
+      await markSessionSeen(row.id);
+      await onStateRefresh();
+    }
+  };
+  // Three desktop states. false → no desktop action at all: Resume in Terminal
+  // (rendered right after) becomes the primary, thread-preserving action for
+  // CLI-only users. undefined (check pending) → a neutral session action that
+  // resolves availability at action time. true → the Desktop deep link.
   const desktopAction =
-    desktopInstalled === false && !row.cwd ? null : desktopInstalled === false ? (
+    desktopInstalled === false ? null : desktopInstalled === undefined ? (
       <Action
-        title="Open Project Via Codex CLI"
-        icon={Icon.Terminal}
+        title="Open Session"
+        icon={Icon.AppWindow}
         onAction={() =>
           void runAction(
-            () => openWorkspaceViaCli(row.cwd),
-            "Could not open the project",
-            "Set Codex CLI Path in extension preferences and try again.",
+            async () =>
+              markOpened(
+                (await isCodexDesktopInstalled())
+                  ? await openThread(row.id)
+                  : await openInTerminal(row.cwd || undefined, row.id),
+              ),
+            "Could not open the session",
+            "Use Resume in Terminal or Copy Resume Command.",
           )
         }
       />
     ) : (
       <Action
-        title={
-          desktopInstalled === undefined
-            ? "Open Session"
-            : scope === "Archived"
-              ? "Open in Codex Desktop (Archived — May Not Load)"
-              : "Open in Codex Desktop"
-        }
+        title={scope === "Archived" ? "Open in Codex Desktop (Archived — May Not Load)" : "Open in Codex Desktop"}
         icon={Icon.AppWindow}
         onAction={() =>
           void runAction(
-            async () => {
-              if (await openThread(row.id, row.cwd || undefined)) {
-                await markSessionSeen(row.id);
-                await onStateRefresh();
-              }
-            },
+            async () => markOpened(await openThread(row.id)),
             "Could not open the session",
             "Use Resume in Terminal or Copy Resume Command.",
           )
@@ -268,16 +269,18 @@ function SessionItem({
               {copyActions}
             </>
           )}
-          {row.cwd && desktopInstalled === true ? (
+          {row.cwd && desktopInstalled !== undefined ? (
             <Action
-              title="Open Project in Codex Desktop"
+              title={desktopInstalled ? "Open Project in Codex Desktop" : "Open Project Via Codex CLI"}
               shortcut={Keyboard.Shortcut.Common.Open}
-              icon={Icon.Folder}
+              icon={desktopInstalled ? Icon.Folder : Icon.Terminal}
               onAction={() =>
                 void runAction(
-                  () => openWorkspace(row.cwd),
+                  () => (desktopInstalled ? openWorkspace(row.cwd) : openWorkspaceViaCli(row.cwd)),
                   "Could not open the project",
-                  "Check that Codex Desktop is installed or use Resume in Terminal.",
+                  desktopInstalled
+                    ? "Check that Codex Desktop is installed or use Resume in Terminal."
+                    : "Set Codex CLI Path in extension preferences and try again.",
                 )
               }
             />

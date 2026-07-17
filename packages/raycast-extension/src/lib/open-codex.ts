@@ -61,11 +61,10 @@ export async function openWorkspaceViaCli(path: string): Promise<boolean> {
   }
 }
 
-export async function openThread(id: string, cwd?: string): Promise<boolean> {
+export async function openThread(id: string): Promise<boolean> {
   if (await isCodexDesktopInstalled()) {
     return openDeepLink(threadDeepLink(id));
   }
-  if (cwd) return openWorkspaceViaCli(cwd);
   await showFailureToast("Codex Desktop is not installed", "Use Resume in Terminal or Copy Resume Command.");
   return false;
 }
