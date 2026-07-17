@@ -203,6 +203,22 @@ function SessionItem({
         }
       />
     );
+  // A successful terminal resume opens the session, so it clears the unread
+  // tag exactly like the Desktop path.
+  const resumeAction = (
+    <Action
+      title="Resume in Terminal"
+      shortcut={{ modifiers: ["cmd"], key: "t" }}
+      icon={Icon.Terminal}
+      onAction={() =>
+        void runAction(
+          async () => markOpened(await openInTerminal(row.cwd || undefined, row.id)),
+          "Could not resume the session",
+          "Use Copy Resume Command to run the session manually.",
+        )
+      }
+    />
+  );
   const copyActions = (
     <>
       <Action.CopyToClipboard
@@ -236,36 +252,14 @@ function SessionItem({
         <ActionPanel>
           {scope === "Archived" ? (
             <>
-              <Action
-                title="Resume in Terminal"
-                shortcut={{ modifiers: ["cmd"], key: "t" }}
-                icon={Icon.Terminal}
-                onAction={() =>
-                  void runAction(
-                    () => openInTerminal(row.cwd || undefined, row.id),
-                    "Could not resume the session",
-                    "Use Copy Resume Command to run the session manually.",
-                  )
-                }
-              />
+              {resumeAction}
               {copyActions}
               {desktopAction}
             </>
           ) : (
             <>
               {desktopAction}
-              <Action
-                title="Resume in Terminal"
-                shortcut={{ modifiers: ["cmd"], key: "t" }}
-                icon={Icon.Terminal}
-                onAction={() =>
-                  void runAction(
-                    () => openInTerminal(row.cwd || undefined, row.id),
-                    "Could not resume the session",
-                    "Use Copy Resume Command to run the session manually.",
-                  )
-                }
-              />
+              {resumeAction}
               {copyActions}
             </>
           )}
